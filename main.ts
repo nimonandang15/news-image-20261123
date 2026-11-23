@@ -1,62 +1,73 @@
 // news-image-20261123 — "The World in One Day", Monday 23 November 2026.
-// Node 22, standard library only. The poster is entry.png next to this
-// file, drawn for this competition by render.py; this program copies it,
-// byte for byte, to /output/entry.png, refusing anything that is not a
-// whole PNG inside the gate limits (at most 1 MiB, at most 1024 x 1024).
-// Deterministic: the same entry.png always yields the same output bytes.
+//
+// A tiny Node 22 program (standard library only) that ships the poster
+// drawn by render.py: it reads entry.png from beside this file and
+// writes the same bytes to /output/entry.png, after proving the file
+// is a whole PNG inside the gate limits (at most 1 MiB, at most
+// 1024 by 1024). Running it twice writes the same bytes twice.
 //
 // Local check:
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 
-import { createHash } from 'node:crypto';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { createHash } from "node:crypto";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
-const PNG_MAGIC = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-const MAX_BYTES = 1048576;
-const MAX_SIDE = 1024;
+const MAGIC = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+const LIMIT_BYTES = 1024 * 1024;
+const LIMIT_PX = 1024;
 
-const outDir = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
-const image = readFileSync(new URL('./entry.png', import.meta.url));
-
-if (image.length > MAX_BYTES) {
-  throw new Error(`entry.png is ${image.length} bytes, over the 1 MiB limit`);
-}
-if (image.length < 24) {
-  throw new Error('entry.png is too short to hold a PNG header');
-}
-if (!image.subarray(0, 8).equals(PNG_MAGIC)) {
-  throw new Error('entry.png is not a PNG (bad magic bytes)');
-}
-const width = image.readUInt32BE(16);
-const height = image.readUInt32BE(20);
-// The first chunk must be IHDR, and neither side may be zero: a file
-// with the right magic but a forged header must not slip through.
-const IHDR = Buffer.from([0x49, 0x48, 0x44, 0x52]);
-if (!image.subarray(12, 16).equals(IHDR)) {
-  throw new Error('entry.png has no IHDR chunk (not a valid PNG)');
-}
-if (width === 0 || height === 0) {
-  throw new Error('entry.png has a zero dimension');
-}
-if (width > MAX_SIDE || height > MAX_SIDE) {
-  throw new Error(`entry.png is ${width}x${height}, over the 1024x1024 limit`);
-}
-// A whole image ends with its IEND chunk: refuse a truncated file.
-const IEND = Buffer.from([0x49, 0x45, 0x4e, 0x44]);
-if (!image.subarray(image.length - 12).includes(IEND)) {
-  throw new Error('entry.png is truncated (no IEND chunk at the end)');
+function die(message) {
+  throw new Error(message);
 }
 
-mkdirSync(outDir, { recursive: true });
-const outPath = join(outDir, 'entry.png');
-writeFileSync(outPath, image);
-
-// Read the output back: a partial or corrupted write must fail loudly.
-const written = readFileSync(outPath);
-if (!written.equals(image)) {
-  throw new Error('output entry.png differs from entry.png after writing');
+function u32be(buf, at) {
+  return buf.readUInt32BE(at);
 }
 
-const sha256 = createHash('sha256').update(image).digest('hex');
-console.log(`wrote entry.png: ${width}x${height}, ${image.length} bytes, sha256 ${sha256}`);
+function chunkTag(buf, at) {
+  return buf.subarray(at, at + 4).toString("latin1");
+}
+
+const targetDir = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
+const png = readFileSync(new URL("./entry.png", import.meta.url));
+
+if (png.length > LIMIT_BYTES) {
+  die(`entry.png is ${png.length} bytes, over the 1 MiB limit`);
+}
+if (png.length < 33) {
+  die("entry.png is too short to hold a PNG header and IEND");
+}
+for (let i = 0; i < MAGIC.length; i += 1) {
+  if (png[i] !== MAGIC[i]) die("entry.png is not a PNG (bad magic bytes)");
+}
+if (chunkTag(png, 12) !== "IHDR") {
+  die("entry.png has no IHDR chunk (not a valid PNG)");
+}
+const pxWide = u32be(png, 16);
+const pxHigh = u32be(png, 20);
+if (pxWide === 0 || pxHigh === 0) {
+  die("entry.png has a zero dimension");
+}
+if (pxWide > LIMIT_PX || pxHigh > LIMIT_PX) {
+  die(`entry.png is ${pxWide}x${pxHigh}, over the 1024x1024 limit`);
+}
+// The IEND chunk is 12 bytes: a zero length, the tag, and a CRC, so
+// the tag itself sits 8 bytes before the end of the file.
+if (chunkTag(png, png.length - 8) !== "IEND") {
+  die("entry.png is truncated (no IEND chunk at the end)");
+}
+
+mkdirSync(targetDir, { recursive: true });
+const dest = join(targetDir, "entry.png");
+writeFileSync(dest, png);
+
+const back = readFileSync(dest);
+if (!back.equals(png)) {
+  die("output entry.png differs from entry.png after writing");
+}
+
+const digest = createHash("sha256").update(png).digest("hex");
+console.log(
+  `wrote entry.png: ${pxWide}x${pxHigh}, ${png.length} bytes, sha256 ${digest}`,
+);

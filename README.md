@@ -4,27 +4,27 @@
 [![rank](https://make.fun/badge/news-image-20261123/nimonandang15/news-image-20261123/rank.svg)](https://make.fun/bounty/news-image-20261123/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=news-image-20261123)
 [![reward](https://make.fun/badge/news-image-20261123/nimonandang15/news-image-20261123/reward.svg)](https://make.fun/bounty/news-image-20261123?utm_source=github&utm_medium=readme&utm_campaign=news-image-20261123)
 
-One image that sums up the world's news of Monday 23 November 2026 — a newspaper front page, "The World in One Day", with the six stories that defined the day.
+A newspaper front page called "The World in One Day" that packs Monday 23 November 2026 into a single image: the six stories that mattered most, plus the day's shorter briefs along the bottom.
 
-## The day's news
+## What happened that day
 
-1. **COP31 collapses with no deal** — The UN climate summit in Antalya, Turkey, ends Sunday with no agreement, the longest summit in history after 44+ hours of overtime. The final "Antalya Pact" draft did not mention fossil fuels once; the EU refused it and the UN chief is "deeply disappointed".
-2. **Gulf war widens as tankers are hit** — Houthis strike Riyadh for a third straight day; at least 25 tankers have been hit in and around the Strait of Hormuz in a week; the Saudi-led coalition intercepts a Houthi missile.
-3. **Drone hits flats near Kyiv; 14 missing** — A Russian drone strikes an apartment block in Dymer, leaving 14 people missing; the Sparta II is still burning off Finland after a drone attack.
-4. **Factory fire: dozens missing** — Three people are dead after a candy factory fire in Banten province, Indonesia; rescuers are searching for 36 workers still missing.
-5. **Minister quits over AI exam scandal** — South Korea's education minister resigns amid an AI-driven exam cheating scandal.
-6. **BepiColombo reaches Mercury** — The Europe-Japan probe enters orbit after an eight-year journey, only the second mission ever to orbit the planet.
+1. **COP31 collapses with no deal** — the Antalya climate summit ends on Sunday with nothing agreed, after 44+ hours of overtime made it the longest summit ever. The final draft never mentions fossil fuels; the EU walks away and the UN chief is "deeply disappointed".
+2. **Gulf war widens as tankers are hit** — Houthis strike Riyadh for a third straight day, at least 25 tankers have been hit in and around the Strait of Hormuz inside a week, and the Saudi-led coalition intercepts a Houthi missile.
+3. **Drone hits flats near Kyiv; 14 missing** — a Russian drone strikes an apartment block in Dymer; the Sparta II is still burning off Finland after a drone attack.
+4. **Factory fire: dozens missing** — three dead after a candy factory fire in Banten, Indonesia, with 36 workers still missing in the rubble.
+5. **Minister quits over AI exam scandal** — South Korea's education minister resigns over AI-driven cheating in the university entrance exams.
+6. **BepiColombo reaches Mercury** — the Europe-Japan probe enters orbit after an eight-year journey, only the second mission ever to orbit the planet.
 
-Also: Pentagon releases 43 more UAP files; Democrats win a historic House majority; UN talks on lethal AI weapons continue, no binding rules.
+Also in the footer: the Pentagon releases 43 more UAP files, the Democrats win a historic 258-seat majority, and UN talks on lethal AI weapons continue without binding rules.
 
 Sources: AP, Reuters, AFP, BBC, Al Jazeera, CNN, Politico — 23 Nov 2026.
 
-`main.ts` (Node 22, standard library only) copies `entry.png` byte for byte to `/output/entry.png`, refusing anything that is not a whole PNG within the gate limits (≤ 1 MiB, ≤ 1024×1024). Both runs write the same bytes. The poster is drawn by `render.py` (PIL + DejaVu only).
+## How it works
 
-## Run it
+`render.py` draws the poster from scratch with PIL and the DejaVu faces — no images are fetched or embedded, everything on the page is drawn by the script. `main.ts` (Node 22, standard library only) copies `entry.png` byte for byte into `/output/entry.png`, refusing anything that is not a whole PNG within the gate limits (no more than 1 MiB, no more than 1024×1024). Run the program twice and both runs write identical bytes.
 
 ```sh
-python3 render.py            # rebuild entry.png (deterministic)
+python3 render.py            # redraw entry.png (deterministic)
 mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 ```
 
